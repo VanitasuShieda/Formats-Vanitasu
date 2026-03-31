@@ -48,6 +48,9 @@ El flujo de trabajo y la comunicación de datos se estructuran de la siguiente m
     - Creado panel de control protegido para editar la información del evento (`InfoEvento`) directamente en Google Sheets.
     - Selector de fecha (**DatePicker**) integrado para asegurar compatibilidad total con Excel.
 - **Seguridad**: Sistema de login simple basado en la hoja `OAUsers` con validación de correo insensible a mayúsculas.
+- **Localización Completa**: 
+    - Corregido el formato de fechas: Ahora se muestran en español ("31 de marzo de 2026") tanto en la web como en los documentos PDF generados.
+    - Implementada lógica de zona horaria en el backend para asegurar que la "fecha de hoy" siempre sea precisa según la configuración del script.
 - **Despliegue**: Aplicación publicada y funcional en GitHub Pages.
 
 ---

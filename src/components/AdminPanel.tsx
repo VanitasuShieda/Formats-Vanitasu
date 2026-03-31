@@ -42,7 +42,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
       if (data.status === "success" && data.data) {
         setEventData({
           evento: data.data.EVENTO || "",
-          fecha: data.data.FECHA_EVENTO || "",
+          fecha: (data.data.FECHA_EVENTO || "").toString().split("T")[0],
           lugar: data.data.LUGAR || "",
           organizador: data.data.ORGANIZADOR || "",
         });

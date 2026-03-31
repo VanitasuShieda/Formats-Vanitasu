@@ -26,6 +26,23 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 const GOOGLE_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbyGPgPAYzGDriPqGXbwn6MfcPQNog9XqPmcMzhvldZDDDW4GAkqaMBE4aYz-4k7At4y/exec";
 
+// Utility to format ISO dates to Spanish
+const formatDateSpanish = (dateStr: string) => {
+  if (!dateStr || dateStr === "Próximamente") return dateStr;
+  
+  // Try to parse the date. 
+  // If it's already formatted (e.g. from my backend change), it might just work.
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return dateStr;
+
+  return new Intl.DateTimeFormat('es-ES', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC' // Sheets dates are usually UTC when fetched as ISO
+  }).format(date);
+};
+
 export default function StudentForm() {
   const [formData, setFormData] = useState({
     nombreAlumno: "",
@@ -345,7 +362,7 @@ export default function StudentForm() {
                       📢 <b>Evento:</b> {eventInfo?.EVENTO}
                     </Typography>
                     <Typography variant="body1" sx={{ mb: 1 }}>
-                      📅 <b>Fecha:</b> {eventInfo?.FECHA_EVENTO}
+                      📅 <b>Fecha:</b> {formatDateSpanish(eventInfo?.FECHA_EVENTO)}
                     </Typography>
                     <Typography variant="body1" sx={{ mb: 1 }}>
                       📍 <b>Lugar:</b> {eventInfo?.LUGAR}
