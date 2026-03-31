@@ -16,20 +16,50 @@ import CloseIcon from '@mui/icons-material/Close';
 import EmailIcon from '@mui/icons-material/Email';
 import LockIcon from '@mui/icons-material/Lock';
 
+const GOOGLE_SCRIPT_URL =
+  "https://script.google.com/macros/s/AKfycbyGPgPAYzGDriPqGXbwn6MfcPQNog9XqPmcMzhvldZDDDW4GAkqaMBE4aYz-4k7At4y/exec";
+
 interface LoginDialogProps {
   open: boolean;
   onClose: () => void;
+  onLoginSuccess: () => void;
 }
 
-export default function LoginDialog({ open, onClose }: LoginDialogProps) {
+export default function LoginDialog({ open, onClose, onLoginSuccess }: LoginDialogProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = (e: FormEvent) => {
     e.preventDefault();
-    // TODO: Implement actual login logic eventually
-    console.log('Login attempt with', email);
-    onClose();
+    setLoading(true);
+
+    const callbackName = "login_callback_" + Math.round(100000 * Math.random());
+    (window as any)[callbackName] = (data: any) => {
+      setLoading(false);
+      if (data.status === "success") {
+        onLoginSuccess();
+        setEmail("");
+        setPassword("");
+      } else {
+        alert("Acceso denegado: " + data.message);
+      }
+      delete (window as any)[callbackName];
+    };
+
+    const script = document.createElement("script");
+    const params = new URLSearchParams({
+      action: "login",
+      email: email,
+      password: password,
+      callback: callbackName
+    });
+    script.src = `${GOOGLE_SCRIPT_URL}?${params.toString()}`;
+    document.body.appendChild(script);
+
+    setTimeout(() => {
+      if (script.parentNode) script.parentNode.removeChild(script);
+    }, 5000);
   };
 
   return (
@@ -98,11 +128,11 @@ export default function LoginDialog({ open, onClose }: LoginDialogProps) {
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: 2, pt: 0 }}>
-          <Button onClick={onClose} color="inherit" sx={{ mr: 1, opacity: 0.8 }}>
+          <Button onClick={onClose} color="inherit" sx={{ mr: 1, opacity: 0.8 }} disabled={loading}>
             Cancelar
           </Button>
-          <Button type="submit" variant="contained" disableElevation>
-            Iniciar Sesión
+          <Button type="submit" variant="contained" disableElevation disabled={loading}>
+            {loading ? "Ingresando..." : "Iniciar Sesión"}
           </Button>
         </DialogActions>
       </form>
