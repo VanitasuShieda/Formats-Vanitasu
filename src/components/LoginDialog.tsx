@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import type { FormEvent } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -24,7 +25,7 @@ export default function LoginDialog({ open, onClose }: LoginDialogProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = (e: FormEvent) => {
     e.preventDefault();
     // TODO: Implement actual login logic eventually
     console.log('Login attempt with', email);

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import type { ChangeEvent, FormEvent } from 'react';
 import {
   Card,
   CardContent,
@@ -30,12 +31,12 @@ export default function StudentForm() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
     
@@ -91,7 +92,7 @@ export default function StudentForm() {
           <form onSubmit={handleSubmit}>
             <Grid container spacing={4}>
               {/* Sección Alumno */}
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Box display="flex" alignItems="center" gap={1} mb={2}>
                   <PersonIcon color="secondary" />
                   <Typography variant="h6" color="secondary.main">
@@ -99,7 +100,7 @@ export default function StudentForm() {
                   </Typography>
                 </Box>
                 <Grid container spacing={3}>
-                  <Grid item xs={12} md={8}>
+                  <Grid size={{ xs: 12, md: 8 }}>
                     <TextField
                       fullWidth
                       label="Nombre completo de Alumno(a)"
@@ -110,7 +111,7 @@ export default function StudentForm() {
                       placeholder="Ej. Juan Pérez García"
                     />
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <TextField
                       select
                       fullWidth
@@ -124,7 +125,7 @@ export default function StudentForm() {
                       <MenuItem value="Femenino">Femenino</MenuItem>
                     </TextField>
                   </Grid>
-                  <Grid item xs={12}>
+                  <Grid size={{ xs: 12 }}>
                     <TextField
                       fullWidth
                       type="email"
@@ -141,7 +142,7 @@ export default function StudentForm() {
               </Grid>
 
               {/* Sección Escuela */}
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Box display="flex" alignItems="center" gap={1} mb={2} mt={2}>
                   <WorkIcon color="primary" />
                   <Typography variant="h6" color="primary.main">
@@ -149,7 +150,7 @@ export default function StudentForm() {
                   </Typography>
                 </Box>
                 <Grid container spacing={3}>
-                  <Grid item xs={12}>
+                  <Grid size={{ xs: 12 }}>
                     <TextField
                       fullWidth
                       label="Nombre de la escuela"
@@ -160,7 +161,7 @@ export default function StudentForm() {
                       placeholder="Ej. Secundaria General No. 1"
                     />
                   </Grid>
-                  <Grid item xs={12} md={8}>
+                  <Grid size={{ xs: 12, md: 8 }}>
                     <TextField
                       fullWidth
                       label="Nombre completo del director(a)"
@@ -171,7 +172,7 @@ export default function StudentForm() {
                       placeholder="Ej. María López Hernández"
                     />
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <TextField
                       select
                       fullWidth
@@ -188,7 +189,7 @@ export default function StudentForm() {
                 </Grid>
               </Grid>
 
-              <Grid item xs={12} sx={{ mt: 2 }}>
+              <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
                 <Button
                   type="submit"
                   fullWidth
