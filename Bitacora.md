@@ -53,5 +53,19 @@ El flujo de trabajo y la comunicación de datos se estructuran de la siguiente m
     - Implementada lógica de zona horaria en el backend para asegurar que la "fecha de hoy" siempre sea precisa según la configuración del script.
 - **Despliegue**: Aplicación publicada y funcional en GitHub Pages.
 
+### Fase 3: Optimización, Caché y Previsualización Dinámica (Abril 2026 - v2.1.0)
+- **Vista Previa de Plantilla en Tiempo Real**: 
+    - Integración de llamada asíncrona para descargar el formato base original desde Google Docs y procesarlo dentro del Panel Administrativo de React.
+    - Se desarrollaron heurísticas CSS a medida y logotipos flotantes (absolutos) para calcar fielmente el diseño de impresión (centrado, justificado al vuelo y simulaciones de nombres/género).
+- **Servicio Centralizado (`apiService.ts`)**: 
+    - Refactorización drástica donde toda la comunicación con el backend pasó a ser gestionada a través de un servicio inyector de JSONP basado en Promesas (`async/await`). Centralizando la URL única de ejecución.
+- **Implementación de Caché (Rendimiento)**: 
+    - Se instaló memoria caché (RAM y `sessionStorage`) en el frontend para almacenar la meta-información del evento. Ahora el panel carga al instante reduciendo al mínimo las cuotas consumidas en Google Servers.
+    - Se ató el estado del login del administrador a `localStorage` para evitar pedir contraseñas incesantemente tras cerrar la pestaña.
+- **Resiliencia de Conexión y Corrección de Bugs**:
+    - **Solución Silenciosa de JSONP**: Se implementó una destructora de caracteres en Google Apps Script para limpiar retornos de carro invisibles (`\u2028`, `\u2029`) de Google Docs que paralizaban la ejecución en el navegador.
+    - **Tolerancia a Cold-Starts**: Los límites de tiempo (timeouts) de red fueron re-ajustados masivamente (hasta 90s) para asegurar respuesta incluso cuando los servidores de Google se "duermen" por inactividad.
+- **Versionado Dinámico Visual**: Integrada una viñeta en el encabezado izquierdo que lee la última versión productiva en tiempo real del archivo `package.json` (ej: v2.1.0).
+
 ---
 **Nota Técnica:** Todas las operaciones con Google Apps Script utilizan ahora `GET` + `callback` (JSONP), lo que elimina los errores de "Preflight" y asegura compatibilidad total con el entorno de producción.

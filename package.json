@@ -2,7 +2,7 @@
   "name": "formats-vanitasu",
   "homepage": "https://vanitasushieda.github.io/Formats-Vanitasu/",
   "private": true,
-  "version": "0.0.0",
+  "version": "2.1.07",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "deploy": "gh-pages -d dist -m \"Deploy v%npm_package_version%\""
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

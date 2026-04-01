@@ -22,14 +22,12 @@ import WorkIcon from "@mui/icons-material/Work";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import DownloadIcon from "@mui/icons-material/Download";
 import RefreshIcon from "@mui/icons-material/Refresh";
-
-const GOOGLE_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbyGPgPAYzGDriPqGXbwn6MfcPQNog9XqPmcMzhvldZDDDW4GAkqaMBE4aYz-4k7At4y/exec";
+import { apiService } from "../services/apiService";
 
 // Utility to format ISO dates to Spanish
 const formatDateSpanish = (dateStr: string) => {
   if (!dateStr || dateStr === "Próximamente") return dateStr;
-  
+
   // Try to parse the date. 
   // If it's already formatted (e.g. from my backend change), it might just work.
   const date = new Date(dateStr);
@@ -55,6 +53,7 @@ export default function StudentForm() {
 
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [generatedPdfUrl, setGeneratedPdfUrl] = useState<string | null>(null);
   const [loadingMessage, setLoadingMessage] = useState("Iniciando solicitud...");
 
@@ -90,42 +89,20 @@ export default function StudentForm() {
   const [loadingInfo, setLoadingInfo] = useState(true);
 
   useEffect(() => {
-    // Función para manejar JSONP y evitar errores de CORS en el GET
-    const fetchEventDataJSONP = () => {
-      const callbackName =
-        "jsonp_callback_" + Math.round(100000 * Math.random());
-
-      // Creamos la función global que llamará Google Apps Script
-      (window as any)[callbackName] = (data: any) => {
+    const fetchEventData = async () => {
+      try {
+        const data = await apiService.getEventInfo();
         if (data.status === "success" && data.data) {
           setEventInfo(data.data);
-          setLoadingInfo(false);
         }
-        // Limpieza de la función del objeto window
-        delete (window as any)[callbackName];
-      };
-
-      // Inyectamos el script en el HTML
-      const script = document.createElement("script");
-      script.src = `${GOOGLE_SCRIPT_URL}${GOOGLE_SCRIPT_URL.includes("?") ? "&" : "?"}callback=${callbackName}`;
-
-      script.onerror = () => {
-        console.warn("JSONP error: Usando información de respaldo.");
+      } catch (err) {
+        console.warn("Error cargando evento, usando info de respaldo:", err);
+      } finally {
         setLoadingInfo(false);
-        delete (window as any)[callbackName];
-      };
-
-      document.body.appendChild(script);
-
-      // Limpieza del tag script después de la ejecución
-      setTimeout(() => {
-        if (script.parentNode) {
-          script.parentNode.removeChild(script);
-        }
-      }, 5000);
+      }
     };
 
-    fetchEventDataJSONP();
+    fetchEventData();
   }, []);
 
   const handleChange = (
@@ -137,6 +114,7 @@ export default function StudentForm() {
 
   const handleReset = () => {
     setSuccess(false);
+    setSnackbarOpen(false);
     setGeneratedPdfUrl(null);
     setLoading(false);
     setFormData({
@@ -155,48 +133,28 @@ export default function StudentForm() {
     setGeneratedPdfUrl(null);
     setLoadingMessage("Iniciando solicitud...");
 
-    // Mapeo exacto de los campos requeridos en el Apps Script para la URL
-    const params = new URLSearchParams({
-      action: "submit",
-      nombreAlumno: formData.nombreAlumno,
-      identidadAlumno: formData.identidadAlumno,
-      escuela: formData.escuela,
-      director: formData.director,
-      sexoDirector: formData.sexoDirector,
-      correo: formData.correo || "", // Opcional
-    });
+    try {
+      const data = await apiService.submitStudentForm({
+        nombreAlumno: formData.nombreAlumno,
+        identidadAlumno: formData.identidadAlumno,
+        escuela: formData.escuela,
+        director: formData.director,
+        sexoDirector: formData.sexoDirector,
+        correo: formData.correo || "", // Opcional
+      });
 
-    const callbackName = "submit_callback_" + Math.round(100000 * Math.random());
-
-    // Manejador del resultado del envío vía JSONP
-    (window as any)[callbackName] = (data: any) => {
       if (data.status === "success") {
         setGeneratedPdfUrl(data.pdfUrl);
         setSuccess(true);
-        setLoading(false);
+        setSnackbarOpen(true);
       } else {
         alert("Error de Google Script: " + (data.message || "Desconocido"));
-        setLoading(false);
       }
-      delete (window as any)[callbackName];
-    };
-
-    // Crear e inyectar el script para el envío
-    const script = document.createElement("script");
-    script.src = `${GOOGLE_SCRIPT_URL}${GOOGLE_SCRIPT_URL.includes("?") ? "&" : "?"}${params.toString()}&callback=${callbackName}`;
-
-    script.onerror = () => {
+    } catch (err: any) {
+      alert("Error de red al intentar generar el PDF: " + err.message);
+    } finally {
       setLoading(false);
-      alert("Error de red al intentar generar el PDF.");
-      delete (window as any)[callbackName];
-    };
-
-    document.body.appendChild(script);
-
-    // Limpieza
-    setTimeout(() => {
-      if (script.parentNode) script.parentNode.removeChild(script);
-    }, 12000);
+    }
   };
 
   return (
@@ -215,32 +173,48 @@ export default function StudentForm() {
               justifyContent: "center",
             }}
           >
-            <CheckCircleIcon 
-              sx={{ 
-                fontSize: 80, 
+            <CheckCircleIcon
+              sx={{
+                fontSize: 80,
                 color: "success.main",
                 filter: "drop-shadow(0 0 20px rgba(46, 125, 50, 0.4))",
-                mb: 3 
-              }} 
+                mb: 3
+              }}
             />
             <Typography variant="h3" fontWeight={700} gutterBottom>
               ¡PDF Generado!
             </Typography>
             <Typography variant="body1" color="text.secondary" sx={{ mb: 5, maxWidth: 450 }}>
-              La constancia para <b>{formData.nombreAlumno}</b> ha sido creada con éxito. 
+              La constancia para <b>{formData.nombreAlumno}</b> ha sido creada con éxito.
               {formData.correo && " También se ha enviado una copia a tu correo electrónico."}
             </Typography>
 
-            <Box sx={{ display: "flex", gap: 2, flexDirection: { xs: "column", sm: "row" }, width: "100%", justifyContent: "center" }}>
+            <Box
+              sx={{
+                display: "flex",
+                gap: { xs: 3, sm: 2 },
+                flexDirection: { xs: "column", sm: "row" },
+                width: "100%",
+                justifyContent: "center",
+                alignItems: "center"
+              }}
+            >
               <Button
                 variant="contained"
                 size="large"
                 startIcon={<DownloadIcon />}
-                href={generatedPdfUrl || "#"}
-                target="_blank"
-                sx={{ 
-                  py: 2, 
-                  px: 4, 
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (generatedPdfUrl) {
+                    window.open(generatedPdfUrl, "_blank", "noopener,noreferrer");
+                  } else {
+                    alert("Aún no se ha generado un archivo PDF válido.");
+                  }
+                }}
+                sx={{
+                  py: 2,
+                  px: 4,
+                  width: { xs: "100%", sm: "auto" },
                   fontSize: "1.1rem",
                   borderRadius: 3,
                   boxShadow: "0 8px 32px rgba(0, 242, 254, 0.3)"
@@ -253,7 +227,12 @@ export default function StudentForm() {
                 size="large"
                 startIcon={<RefreshIcon />}
                 onClick={handleReset}
-                sx={{ py: 2, px: 4, borderRadius: 3 }}
+                sx={{
+                  py: 2,
+                  px: 4,
+                  borderRadius: 3,
+                  width: { xs: "100%", sm: "auto" }
+                }}
               >
                 Generar otro
               </Button>
@@ -272,20 +251,20 @@ export default function StudentForm() {
               justifyContent: "center",
             }}
           >
-            <CircularProgress 
-              size={70} 
+            <CircularProgress
+              size={70}
               thickness={2}
-              sx={{ 
+              sx={{
                 mb: 4,
                 color: "primary.main",
                 filter: "drop-shadow(0 0 15px rgba(0, 242, 254, 0.5))"
-              }} 
+              }}
             />
-            <Typography 
-              variant="h5" 
-              color="text.primary" 
-              fontWeight={600} 
-              sx={{ 
+            <Typography
+              variant="h5"
+              color="text.primary"
+              fontWeight={600}
+              sx={{
                 mb: 1,
                 // Animación simple de desvanecimiento para el cambio de mensajes
                 transition: "all 0.3s ease",
@@ -508,12 +487,16 @@ export default function StudentForm() {
       </Card>
 
       <Snackbar
-        open={success}
-        onClose={() => setSuccess(false)}
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={(_, reason) => {
+          if (reason === "clickaway") return;
+          setSnackbarOpen(false);
+        }}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
         <Alert
-          onClose={() => setSuccess(false)}
+          onClose={() => setSnackbarOpen(false)}
           severity="success"
           variant="filled"
           sx={{ width: "100%", alignItems: "center" }}

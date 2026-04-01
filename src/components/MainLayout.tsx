@@ -1,4 +1,5 @@
 import { useState } from "react";
+import packageJson from "../../package.json";
 import {
   AppBar,
   Toolbar,
@@ -12,17 +13,25 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import LoginDialog from "./LoginDialog";
 import StudentForm from "./StudentForm";
 import AdminPanel from "./AdminPanel";
+import AboutPage from "./AboutPage";
 
 export default function MainLayout() {
   const [loginOpen, setLoginOpen] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [view, setView] = useState<"main" | "about">("main");
+  // Inicializar estado leyendo localStorage para mantener la sesión
+  const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem("vanitasu_isAdmin") === "true");
 
   const handleOpenLogin = () => setLoginOpen(true);
   const handleCloseLogin = () => setLoginOpen(false);
-  const handleLogout = () => setIsAdmin(false);
+  
+  const handleLogout = () => {
+    setIsAdmin(false);
+    localStorage.removeItem("vanitasu_isAdmin");
+  };
 
   const handleLoginSuccess = () => {
     setIsAdmin(true);
+    localStorage.setItem("vanitasu_isAdmin", "true");
     setLoginOpen(false);
   };
 
@@ -51,9 +60,24 @@ export default function MainLayout() {
             <Typography
               variant="h6"
               component="div"
-              sx={{ color: "white", fontWeight: 700 }}
+              sx={{ color: "white", fontWeight: 700, display: "flex", alignItems: "center" }}
             >
-              Generador de Constancias Tlacuaches
+              Generador de Constancias Tlacuaches 
+              <Typography 
+                component="span" 
+                sx={{ 
+                  fontSize: "0.55em", 
+                  fontWeight: 500, 
+                  opacity: 0.8, 
+                  bgcolor: "rgba(255,255,255,0.15)", 
+                  px: 1, 
+                  py: 0.2, 
+                  borderRadius: 1,
+                  ml: 1.5
+                }}
+              >
+                v{packageJson.version}
+              </Typography>
             </Typography>
           </Box>
 
@@ -91,12 +115,30 @@ export default function MainLayout() {
         sx={{
           flexGrow: 1,
           pt: { xs: 12, md: 16 },
-          pb: 8,
+          pb: 4,
         }}
       >
         <Container maxWidth="md">
-          {isAdmin ? <AdminPanel onLogout={handleLogout} /> : <StudentForm />}
+          {view === "about" ? (
+            <AboutPage onBack={() => setView("main")} />
+          ) : isAdmin ? (
+            <AdminPanel onLogout={handleLogout} />
+          ) : (
+            <StudentForm />
+          )}
         </Container>
+      </Box>
+
+      {/* Footer */}
+      <Box component="footer" sx={{ py: 3, textAlign: "center", mt: "auto", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+        <Button 
+          variant="text" 
+          color="inherit" 
+          sx={{ textTransform: "none", opacity: 0.5, fontSize: "0.85rem", "&:hover": { opacity: 1, bgcolor: "rgba(255,255,255,0.05)" } }} 
+          onClick={() => setView(view === "about" ? "main" : "about")}
+        >
+          {view === "about" ? "Volver al generador" : "Acerca del Desarrollador e Información del Proyecto"}
+        </Button>
       </Box>
 
       {/* Login Dialog */}

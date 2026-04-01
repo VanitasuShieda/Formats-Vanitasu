@@ -15,9 +15,7 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import EmailIcon from '@mui/icons-material/Email';
 import LockIcon from '@mui/icons-material/Lock';
-
-const GOOGLE_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbyGPgPAYzGDriPqGXbwn6MfcPQNog9XqPmcMzhvldZDDDW4GAkqaMBE4aYz-4k7At4y/exec";
+import { apiService } from '../services/apiService';
 
 interface LoginDialogProps {
   open: boolean;
@@ -30,13 +28,12 @@ export default function LoginDialog({ open, onClose, onLoginSuccess }: LoginDial
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: FormEvent) => {
+  const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    const callbackName = "login_callback_" + Math.round(100000 * Math.random());
-    (window as any)[callbackName] = (data: any) => {
-      setLoading(false);
+    try {
+      const data = await apiService.login(email, password);
       if (data.status === "success") {
         onLoginSuccess();
         setEmail("");
@@ -44,27 +41,16 @@ export default function LoginDialog({ open, onClose, onLoginSuccess }: LoginDial
       } else {
         alert("Acceso denegado: " + data.message);
       }
-      delete (window as any)[callbackName];
-    };
-
-    const script = document.createElement("script");
-    const params = new URLSearchParams({
-      action: "login",
-      email: email,
-      password: password,
-      callback: callbackName
-    });
-    script.src = `${GOOGLE_SCRIPT_URL}?${params.toString()}`;
-    document.body.appendChild(script);
-
-    setTimeout(() => {
-      if (script.parentNode) script.parentNode.removeChild(script);
-    }, 5000);
+    } catch (err: any) {
+      alert("Error conectando con el servidor: " + err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <Dialog 
-      open={open} 
+    <Dialog
+      open={open}
       onClose={onClose}
       PaperProps={{
         elevation: 1,
@@ -85,7 +71,7 @@ export default function LoginDialog({ open, onClose, onLoginSuccess }: LoginDial
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-      
+
       <form onSubmit={handleLogin}>
         <DialogContent dividers sx={{ borderBottom: 'none', borderTopColor: 'rgba(255,255,255,0.1)' }}>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
